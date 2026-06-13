@@ -13,7 +13,7 @@ import storage from 'electron-json-storage';
 import chokidar, { FSWatcher } from 'chokidar';
 import { getHolyGrailSeedData, runesSeed } from './holyGrailSeedData';
 import { buildFlattenObjectCacheKey, flattenObject, isRune, simplifyItemName } from '../../src/utils/objects';
-import { eventToReply, setEventToReply } from '../main';
+import { eventToReply, notifyRarityChanges, setEventToReply } from '../main';
 import settingsStore from './settings';
 import { updateDataToListeners, updateRarityToListeners } from './stream';
 import rarityTracker from './rarityTracker';
@@ -41,7 +41,7 @@ class ItemsStore {
     this.filesChanged = false;
     this.readingFiles = false;
     this.itemNotes = null;
-    setInterval(this.tickReader, 500);
+    setInterval(this.tickReader, 250);
     try { d2s.getConstantData(96); } catch (e) { d2s.setConstantData(96, constants96); }
     try { d2s.getConstantData(97); } catch (e) { d2s.setConstantData(97, constants96); }
     try { d2s.getConstantData(98); } catch (e) { d2s.setConstantData(98, constants96); }
@@ -234,10 +234,21 @@ class ItemsStore {
       // if no file watcher is active
       if (!this.fileWatcher) {
         this.watchPath = path;
+        // Polling is far more reliable than native events on Windows for the
+        // way D2R rewrites save files; awaitWriteFinish avoids reading a save
+        // mid-write. This is what keeps drop detection within ~1s of D2R's
+        // own save flush.
         this.fileWatcher = chokidar.watch(this.prepareChokidarGlobe(this.watchPath), {
           followSymlinks: false,
           ignoreInitial: true,
           depth: 0,
+          usePolling: true,
+          interval: 300,
+          binaryInterval: 300,
+          awaitWriteFinish: {
+            stabilityThreshold: 300,
+            pollInterval: 100,
+          },
         }).on('all', () => {
           this.filesChanged = true;
         });
@@ -342,11 +353,14 @@ class ItemsStore {
       this.currentData = results;
       updateDataToListeners();
 
-      // rarity run: flush this pass, notify renderer + overlay
+      // rarity run: flush this pass, notify renderer + overlay.
+      // The tracker keeps the first scan (baseline) silent, so any changes here
+      // are genuine live finds — announce them on every parse, not just ticks.
       const rarityChanges = rarityTracker.commit();
       event.reply('rarityUpdate', rarityTracker.buildPayload());
-      if (playSounds && rarityChanges.length) {
+      if (rarityChanges.length) {
         event.reply('rarityChanges', rarityChanges);
+        notifyRarityChanges(rarityChanges);
       }
       updateRarityToListeners();
     });

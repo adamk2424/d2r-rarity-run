@@ -1,7 +1,7 @@
 import { holyGrailSeedData as original } from 'd2-holy-grail/client/src/common/seeds/HolyGrailSeedData';
 import { ethGrailSeedData } from 'd2-holy-grail/client/src/common/seeds/EthGrailSeedData';
 import { GrailType, HolyGrailSeed, RuneType, Settings } from '../../src/@types/main';
-import { simplifyItemName } from '../../src/utils/objects';
+import { simplifyItemName } from '../../src/utils/simplifyItemName';
 import { runesMapping } from './runesMapping';
 import { runewordsMapping } from './runewordsMapping';
 import { IEthGrailData } from 'd2-holy-grail/client/src/common/definitions/union/IEthGrailData';

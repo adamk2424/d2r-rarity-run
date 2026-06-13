@@ -5,7 +5,8 @@ import { runesSeed, runewordsSeed } from '../../electron/lib/holyGrailSeedData';
 import { runewordsMapping } from '../../electron/lib/runewordsMapping';
 import { AvailableRunes, GameMode, GameVersion, GrailType, HolyGrailSeed, HolyGrailStats, Item, ItemsInSaves, Settings, Stats } from '../@types/main.d';
 
-export const simplifyItemName = (name: string): string => name.replace(/[^a-z0-9]/gi, '').toLowerCase();
+export { simplifyItemName } from './simplifyItemName';
+import { simplifyItemName } from './simplifyItemName';
 export const isRune = (item: Item | IItem): boolean => !!item.type && !!item.type.match(/^r[0-3][0-9]$/);
 
 export type ItemNames = {[itemId: string]: {}};

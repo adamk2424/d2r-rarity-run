@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, session } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, session, Notification } from 'electron';
 import { writeFile } from 'fs';
 import { extname, join } from 'path';
 import { IpcMainEvent } from 'electron/renderer';
@@ -9,6 +9,7 @@ import rarityTracker from './lib/rarityTracker';
 import settingsStore from './lib/settings';
 import { setupStreamFeed, streamPort, updateDataToListeners, updateRarityToListeners } from './lib/stream';
 import { registerUpdateDownloader } from './lib/update';
+import type { RarityChangeView } from './lib/rarityTracker';
 
 // these constants are set by the build stage
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string
@@ -26,6 +27,34 @@ export const CSP_HEADER =
 export let eventToReply: IpcMainEvent | null;
 export function setEventToReply(e: IpcMainEvent) {
   eventToReply = e;
+}
+
+const assetIconPath = () =>
+  join(process.env.NODE_ENV === 'production' ? process.resourcesPath : app.getAppPath(), 'assets', 'icon.png');
+
+/** Native Windows toast(s) for new rarity mandates — visible over the game. */
+export function notifyRarityChanges(changes: RarityChangeView[]) {
+  if (!Notification.isSupported() || !changes.length) return;
+  // cap to avoid a burst of toasts when many items are identified at once
+  const shown = changes.slice(0, 3);
+  shown.forEach((c) => {
+    const title = c.kind === 'new-tie' ? `Free pick unlocked — ${c.slotLabel}` : `New ${c.slotLabel} mandate!`;
+    new Notification({
+      title,
+      body: `${c.displayName}\n${c.rankLabel}`,
+      icon: assetIconPath(),
+      // visual only — the app plays its own ding, and Focus Assist mutes
+      // notification sounds during fullscreen play anyway
+      silent: true,
+    }).show();
+  });
+  if (changes.length > shown.length) {
+    new Notification({
+      title: 'Rarity Challenge',
+      body: `+${changes.length - shown.length} more new mandates`,
+      icon: assetIconPath(),
+    }).show();
+  }
 }
 
 let mainWindow: BrowserWindow | null
@@ -65,6 +94,8 @@ function createWindow () {
       nodeIntegration: false,
       contextIsolation: true,
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      // keep timers/audio running full-speed while D2R has focus
+      backgroundThrottling: false,
     }
   })
   mainWindowState.manage(mainWindow);
@@ -72,6 +103,16 @@ function createWindow () {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY)
   if (process.env.ELECTRON_ENV === 'development') {
     mainWindow.webContents.openDevTools()
+    // forward renderer console + crashes to the main stdout for debugging
+    mainWindow.webContents.on('console-message', (_e, level, message, line, sourceId) => {
+      console.log(`[renderer:${level}] ${message} (${sourceId}:${line})`);
+    });
+    mainWindow.webContents.on('render-process-gone', (_e, details) => {
+      console.log('[renderer GONE]', JSON.stringify(details));
+    });
+    mainWindow.webContents.on('did-fail-load', (_e, code, desc) => {
+      console.log('[renderer did-fail-load]', code, desc);
+    });
   }
 
   mainWindow.on('closed', () => {

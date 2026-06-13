@@ -29,7 +29,7 @@ const defaultSettings: Settings = {
   [settingsKeys.grailRunes]: false,
   [settingsKeys.grailRunewords]: false,
   [settingsKeys.onlyMissing]: false,
-  [settingsKeys.enableSounds]: false,
+  [settingsKeys.enableSounds]: true,
   [settingsKeys.includeSocketed]: true,
   [settingsKeys.rarityIncludeStash]: false,
 }

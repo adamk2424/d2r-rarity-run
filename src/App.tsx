@@ -146,9 +146,14 @@ export function App() {
           autoClose: 6000,
         });
       });
-      if (appSettings.current.enableSounds && changes.length) {
-        rarityDingPlayer.current?.load();
-        rarityDingPlayer.current?.play();
+      // App audio is the reliable cue while D2R is fullscreen (Windows Focus
+      // Assist suppresses OS-notification sounds during games), so always ding.
+      if (changes.length) {
+        const player = rarityDingPlayer.current;
+        if (player) {
+          player.currentTime = 0;
+          player.play().catch(() => { /* autoplay race on first event */ });
+        }
       }
     });
 
