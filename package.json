@@ -12,6 +12,7 @@
     "make": "electron-forge make",
     "release": "electron-forge publish",
     "lint": "eslint . --ext js,ts",
+    "test": "jest",
     "translate": "npx i18next-parser"
   },
   "keywords": [],
