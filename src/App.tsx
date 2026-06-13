@@ -10,7 +10,6 @@ import { toast, ToastContainer } from 'material-react-toastify';
 import 'material-react-toastify/dist/ReactToastify.css';
 import { FileReaderResponse, GameMode, ItemNotes, Settings } from './@types/main.d';
 import defaultSettings from './utils/defaultSettings';
-import { useTranslation } from 'react-i18next';
 import type { RarityChangeView, RarityPayload } from '../electron/lib/rarityTracker';
 import dingSound from '../assets/ding.mp3';
 
@@ -31,7 +30,6 @@ export function App() {
   const [rarityPayload, setRarityPayload] = useState<RarityPayload | null>(null);
   const appSettings = useRef(defaultSettings);
   const rarityDingPlayer = useRef<HTMLAudioElement>(null);
-  const { t } = useTranslation();
 
   const updateSettings = (settings: Settings) => {
     // @ts-ignore
@@ -114,9 +112,9 @@ export function App() {
     window.Main.on('openFolderWorking', () => {
       setUiState(UiState.Reading);
     });
-    window.Main.on('errorReadingSaveFile', (saveFiles: string[]) => {
-      toast.error(t('Some save files could not be read: ' + saveFiles.join(', ')))
-    });
+    // Unreadable saves (old-format mules, modded shared stash, mid-write files)
+    // are expected and harmless here — the run character still parses fine, so
+    // we intentionally don't surface a toast for them.
     window.Main.on('openFolder', (fileReaderResponse: FileReaderResponse) => {
       if (fileReaderResponse === null) {
         if (uiState !== UiState.Loading) {
@@ -151,7 +149,7 @@ export function App() {
       if (changes.length) {
         const player = rarityDingPlayer.current;
         if (player) {
-          player.volume = 0.25; // ~-12dB; ding.mp3 is hot at full volume
+          player.volume = 0.10; // 10% of original; ding.mp3 is hot at full volume
           player.currentTime = 0;
           player.play().catch(() => { /* autoplay race on first event */ });
         }
