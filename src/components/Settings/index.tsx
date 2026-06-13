@@ -112,6 +112,10 @@ export default function SettingsPanel({ appSettings }: SettingsPanelProps) {
     window.Main.saveSetting(settingsKeys.enableSounds, sound);
   };
 
+  const handleRarityIncludeStash = (event: React.ChangeEvent<HTMLInputElement>) => {
+    window.Main.saveSetting(settingsKeys.rarityIncludeStash, event.target.checked);
+  };
+
   const handleGameVersion = (event: SelectChangeEvent) => {
     const version = (event.target.value as GameVersion);
     window.Main.saveSetting(settingsKeys.gameVersion, version);
@@ -261,6 +265,11 @@ export default function SettingsPanel({ appSettings }: SettingsPanelProps) {
                 sx={{mt: 1}}
                 control={<Checkbox checked={appSettings.enableSounds} onChange={handleSound} />}
                 label={i18n.t`Play sound when new item is found`}
+              />
+              <FormControlLabel
+                sx={{mt: 1}}
+                control={<Checkbox checked={appSettings.rarityIncludeStash} onChange={handleRarityIncludeStash} />}
+                label={i18n.t`Rarity Run: also count shared stash items (off = only items on the run character)`}
               />
             </FormControl>
           </ListItem>

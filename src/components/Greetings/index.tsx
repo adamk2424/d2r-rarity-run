@@ -1,7 +1,5 @@
-import { Container, Image } from './styles'
+import { Container } from './styles'
 
-import logo from '../../../assets/logo.svg';
-import twitchIcon from '../../../assets/twitch-icon.svg';
 import 'animate.css';
 import { Typography, Button } from '@mui/material';
 import { Language } from '../List/language';
@@ -28,18 +26,7 @@ export function Greetings({ uiState, onFileClick, onManualClick }: GreetingsProp
       <ButtonPanel style={{ position: 'absolute', right: 10, top: -14 }}>
         <Language />
       </ButtonPanel>
-      <h1>{t('Holy Grail')}</h1>
-      <h6>
-        {t('by')}&nbsp;
-        <a href="#" onClick={() => window.Main.openUrl('https://www.twitch.tv/nadinwins')}>
-          NadinWins<img src={twitchIcon} alt="Twitch" />
-        </a>
-      </h6>
-      <Image
-        src={logo}
-        alt=""
-        className="animate__animated animate__tada"
-      />
+      <h1>Rarity Challenge</h1>
       { uiState !== UiState.Loading
         ? <>
           <Button

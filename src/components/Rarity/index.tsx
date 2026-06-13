@@ -1,14 +1,35 @@
 import { useState } from 'react';
 import {
   Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle,
-  MenuItem, Select, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography,
+  FormControlLabel, MenuItem, Select, Switch, Table, TableBody, TableCell,
+  TableHead, TableRow, Tooltip, Typography,
 } from '@mui/material';
-import type { RarityPayload, SlotView } from '../../../electron/lib/rarityTracker';
+import type { HistoryEntry, RarityPayload, SlotView } from '../../../electron/lib/rarityTracker';
 import { RARITY_CLASS_COLORS, COMPLIANCE_COLORS, COMPLIANCE_LABELS } from '../../utils/rarityColors';
 
-type RarityBoardProps = {
+type RarityProps = {
   payload: RarityPayload | null,
 };
+
+function CharacterPicker({ payload }: { payload: RarityPayload }) {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Typography sx={{ color: '#777' }}>Run character:</Typography>
+      <Select
+        size="small"
+        value={payload.active || ''}
+        displayEmpty
+        onChange={(e) => window.Main.setRunCharacter(e.target.value || null)}
+      >
+        {payload.knownCharacters.map((c) => (
+          <MenuItem key={c.name} value={c.name}>
+            {c.name} — {c.heroClass} lvl {c.level}
+          </MenuItem>
+        ))}
+      </Select>
+    </Box>
+  );
+}
 
 function SlotRow({ slot }: { slot: SlotView }) {
   const mandateColor = slot.mandate ? RARITY_CLASS_COLORS[slot.mandate.rarityClass] : '#555';
@@ -52,68 +73,61 @@ function SlotRow({ slot }: { slot: SlotView }) {
   );
 }
 
-export function RarityBoard({ payload }: RarityBoardProps) {
-  const characterNames = payload ? Object.keys(payload.characters) : [];
-  const [selected, setSelected] = useState<string | null>(null);
+function EmptyState() {
+  return (
+    <Box sx={{ padding: 4, textAlign: 'center', color: '#888' }}>
+      <Typography variant="h6">Rarity Challenge</Typography>
+      <Typography>
+        No characters found in the save folder yet. Create an offline character and it will
+        appear here; identified items then dictate your gear, slot by slot.
+      </Typography>
+    </Box>
+  );
+}
+
+export function RarityBoard({ payload }: RarityProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  if (!payload || characterNames.length === 0) {
-    return (
-      <Box sx={{ padding: 4, textAlign: 'center', color: '#888' }}>
-        <Typography variant="h6">Rarity Run</Typography>
-        <Typography>
-          No characters tracked yet. Play (or save &amp; exit) an offline character and identified
-          items will start dictating your gear, slot by slot.
-        </Typography>
-      </Box>
-    );
+  if (!payload || payload.knownCharacters.length === 0) {
+    return <EmptyState />;
   }
 
-  const charName = selected && payload.characters[selected] ? selected : (payload.active || characterNames[0]);
-  const char = payload.characters[charName];
+  const char = payload.character;
 
   return (
     <Box sx={{ padding: 2, textAlign: 'left' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1 }}>
-        {characterNames.length > 1 ? (
-          <Select
-            size="small"
-            value={charName}
-            onChange={(e) => setSelected(e.target.value)}
-          >
-            {characterNames.map((name) => (
-              <MenuItem key={name} value={name}>{name}</MenuItem>
-            ))}
-          </Select>
-        ) : (
-          <Typography variant="h6">{char.name}</Typography>
-        )}
-        <Typography sx={{ color: '#999' }}>
-          {char.heroClass} — level {char.level}
-        </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1, flexWrap: 'wrap' }}>
+        <CharacterPicker payload={payload} />
         <Box sx={{ flex: 1 }} />
         <Button size="small" color="error" variant="outlined" onClick={() => setConfirmOpen(true)}>
           Reset run
         </Button>
       </Box>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ color: '#777' }}>Slot</TableCell>
-            <TableCell sx={{ color: '#777' }}>You must wear</TableCell>
-            <TableCell sx={{ color: '#777' }}>Status</TableCell>
-            <TableCell sx={{ color: '#777' }}>Currently equipped</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {char.slots.map((slot) => <SlotRow key={slot.slotKey} slot={slot} />)}
-        </TableBody>
-      </Table>
+      {char ? (
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ color: '#777' }}>Slot</TableCell>
+              <TableCell sx={{ color: '#777' }}>You must wear</TableCell>
+              <TableCell sx={{ color: '#777' }}>Status</TableCell>
+              <TableCell sx={{ color: '#777' }}>Currently equipped</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {char.slots.map((slot) => <SlotRow key={slot.slotKey} slot={slot} />)}
+          </TableBody>
+        </Table>
+      ) : (
+        <Typography sx={{ color: '#888', padding: 2 }}>
+          Scanning… the run board will populate on the next save write.
+        </Typography>
+      )}
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogTitle>Reset the Rarity Run?</DialogTitle>
+        <DialogTitle>Reset this run?</DialogTitle>
         <DialogContent>
-          This wipes the recorded drop history and all slot mandates for ALL tracked
-          characters. The run starts fresh from the next save change. This cannot be undone.
+          This wipes the recorded drop history and all slot mandates for{' '}
+          <b>{payload.active}</b>. The run re-baselines from whatever is on the character now,
+          silently. This cannot be undone.
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
@@ -124,10 +138,73 @@ export function RarityBoard({ payload }: RarityBoardProps) {
               setConfirmOpen(false);
             }}
           >
-            Reset everything
+            Reset run
           </Button>
         </DialogActions>
       </Dialog>
+    </Box>
+  );
+}
+
+function HistoryCell({ entry, current }: { entry: HistoryEntry, current: boolean }) {
+  return (
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        border: current ? '1px solid #c7b377' : '1px solid #333',
+        borderRadius: '4px',
+        padding: '2px 8px',
+        marginRight: 1,
+        marginBottom: 1,
+      }}
+    >
+      <Typography component="span" sx={{ color: RARITY_CLASS_COLORS[entry.rarityClass], fontWeight: current ? 700 : 400 }}>
+        {entry.displayName}
+      </Typography>
+      <Typography component="span" sx={{ color: '#777', fontSize: '0.8em', marginLeft: 0.5 }}>
+        {entry.rankLabel}
+      </Typography>
+    </Box>
+  );
+}
+
+export function RarityHistory({ payload }: RarityProps) {
+  if (!payload || payload.knownCharacters.length === 0) {
+    return <EmptyState />;
+  }
+  const char = payload.character;
+  if (!char) {
+    return <Typography sx={{ color: '#888', padding: 2 }}>No run data yet.</Typography>;
+  }
+
+  return (
+    <Box sx={{ padding: 2, textAlign: 'left' }}>
+      <Typography variant="h6" sx={{ marginBottom: 1 }}>
+        Progression — {char.name} ({char.heroClass} lvl {char.level})
+      </Typography>
+      <Typography sx={{ color: '#888', marginBottom: 2, fontSize: '0.9em' }}>
+        Every item that became the mandate for each slot over the course of the run, in order.
+        The highlighted item is the current must-wear.
+      </Typography>
+      <Table size="small">
+        <TableBody>
+          {char.slots.map((slot) => (
+            <TableRow key={slot.slotKey}>
+              <TableCell sx={{ width: 90, color: '#bbb', verticalAlign: 'top' }}>{slot.label}</TableCell>
+              <TableCell>
+                {slot.history.length === 0 ? (
+                  <Typography component="span" sx={{ color: '#555' }}>—</Typography>
+                ) : (
+                  slot.history.map((entry, i) => (
+                    <HistoryCell key={i} entry={entry} current={i === slot.history.length - 1} />
+                  ))
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </Box>
   );
 }

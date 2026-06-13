@@ -63,6 +63,9 @@ export function App() {
     if (typeof settings.includeSocketed === 'undefined') {
       settings.includeSocketed = defaultSettings.includeSocketed;
     }
+    if (typeof settings.rarityIncludeStash === 'undefined') {
+      settings.rarityIncludeStash = defaultSettings.rarityIncludeStash;
+    }
     if (typeof settings.gameVersion === 'undefined') {
       settings.gameVersion = defaultSettings.gameVersion;
     }

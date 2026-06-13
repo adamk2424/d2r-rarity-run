@@ -249,6 +249,9 @@ class ItemsStore {
       }
     }
 
+    // start a fresh rarity-run parse pass
+    rarityTracker.beginParse();
+
     // prepare item list
     const settings = settingsStore.getSettings();
     const flatItems = flattenObject(getHolyGrailSeedData(settings, false), buildFlattenObjectCacheKey('all', settings));
@@ -442,6 +445,10 @@ class ItemsStore {
     } else {
       event.reply('noDirectorySelected', null);
     }
+  }
+
+  forceReread = () => {
+    this.filesChanged = true;
   }
 
   tickReader = async () => {

@@ -154,6 +154,13 @@ async function registerListeners () {
   });
   ipcMain.on('resetRarityRun', (event) => {
     rarityTracker.reset();
+    itemsDatabase.forceReread();
+    event.reply('rarityUpdate', rarityTracker.buildPayload());
+    updateRarityToListeners();
+  });
+  ipcMain.on('setRunCharacter', (event, name: string | null) => {
+    rarityTracker.setRunCharacter(name);
+    itemsDatabase.forceReread();
     event.reply('rarityUpdate', rarityTracker.buildPayload());
     updateRarityToListeners();
   });

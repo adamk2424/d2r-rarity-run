@@ -59,6 +59,9 @@ export const api = {
   resetRarityRun: () => {
     ipcRenderer.send('resetRarityRun');
   },
+  setRunCharacter: (name: string | null) => {
+    ipcRenderer.send('setRunCharacter', name);
+  },
   setItemNote: (itemName: string, note: string) => {
     ipcRenderer.send('setItemNote', itemName, note);
   },

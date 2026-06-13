@@ -91,7 +91,8 @@ export type Settings = {
   gameVersion: GameVersion,
   onlyMissing: boolean,
   enableSounds: boolean,
-  includeSocketed: boolean
+  includeSocketed: boolean,
+  rarityIncludeStash: boolean
 }
 
 export type HolyGrailSeed = IHolyGrailData & {
