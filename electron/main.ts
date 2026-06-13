@@ -102,7 +102,7 @@ function createWindow () {
 
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY)
   if (process.env.ELECTRON_ENV === 'development') {
-    mainWindow.webContents.openDevTools()
+    // DevTools no longer auto-opens; use F12 / Ctrl+Shift+I if needed.
     // forward renderer console + crashes to the main stdout for debugging
     mainWindow.webContents.on('console-message', (_e, level, message, line, sourceId) => {
       console.log(`[renderer:${level}] ${message} (${sourceId}:${line})`);
