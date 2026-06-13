@@ -6,6 +6,7 @@ import { Server, Socket } from "socket.io";
 import { CSP_HEADER } from '../main';
 import settingsStore from './settings';
 import itemsDatabase from './items';
+import rarityTracker from './rarityTracker';
 import getPort, {portNumbers} from 'get-port';
 
 // these constants are set by the build stage
@@ -64,11 +65,18 @@ export function updateDataToListeners() {
   })
 }
 
+export function updateRarityToListeners() {
+  streamListeners.forEach((socket) => {
+    socket.emit("rarityUpdate", rarityTracker.buildPayload());
+  })
+}
+
 const addStreamListener = (socket: Socket): void => {
   streamListeners.set(socket.id, socket);
   socket.emit("updatedSettings", settingsStore.getSettings());
   updateDataToListeners();
   updateSettingsToListeners();
+  updateRarityToListeners();
 }
 
 const removeStreamListener = (socket: Socket): void => {

@@ -53,6 +53,12 @@ export const api = {
   getItemNotes: () => {
     ipcRenderer.send('getItemNotes');
   },
+  getRarityState: () => {
+    ipcRenderer.send('getRarityState');
+  },
+  resetRarityRun: () => {
+    ipcRenderer.send('resetRarityRun');
+  },
   setItemNote: (itemName: string, note: string) => {
     ipcRenderer.send('setItemNote', itemName, note);
   },

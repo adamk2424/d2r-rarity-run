@@ -10,8 +10,9 @@ import { toast, ToastContainer } from 'material-react-toastify';
 import 'material-react-toastify/dist/ReactToastify.css';
 import { FileReaderResponse, GameMode, ItemNotes, Settings } from './@types/main.d';
 import defaultSettings from './utils/defaultSettings';
-import VersionCheck from './components/Settings/VersionCheck';
 import { useTranslation } from 'react-i18next';
+import type { RarityChangeView, RarityPayload } from '../electron/lib/rarityTracker';
+import dingSound from '../assets/ding.mp3';
 
 /* eslint-disable no-unused-vars */
 export enum UiState {
@@ -27,7 +28,9 @@ export function App() {
   const [fileReaderResponse, setFileReaderResponse] = useState<FileReaderResponse | null>(null);
   const [uiState, setUiState] = useState(UiState.Loading);
   const [itemNotes, setItemNotes] = useState({});
+  const [rarityPayload, setRarityPayload] = useState<RarityPayload | null>(null);
   const appSettings = useRef(defaultSettings);
+  const rarityDingPlayer = useRef<HTMLAudioElement>(null);
   const { t } = useTranslation();
 
   const updateSettings = (settings: Settings) => {
@@ -130,6 +133,21 @@ export function App() {
     window.Main.on('getItemNotes', (itemNotes: ItemNotes) => {
       setItemNotes(itemNotes);
     })
+    window.Main.on('rarityUpdate', (payload: RarityPayload) => {
+      setRarityPayload(payload);
+    });
+    window.Main.on('rarityChanges', (changes: RarityChangeView[]) => {
+      changes.forEach((change) => {
+        const verb = change.kind === 'new-tie' ? 'Free pick unlocked' : 'New mandate';
+        toast.info(`${verb} — ${change.slotLabel}: ${change.displayName} [${change.rankLabel}]`, {
+          autoClose: 6000,
+        });
+      });
+      if (appSettings.current.enableSounds && changes.length) {
+        rarityDingPlayer.current?.load();
+        rarityDingPlayer.current?.play();
+      }
+    });
 
     const settings = window.Main.getSettings();
     updateSettings(settings);
@@ -155,6 +173,7 @@ export function App() {
               fileReaderResponse={fileReaderResponse}
               appSettings={appSettings.current}
               itemNotes={itemNotes}
+              rarityPayload={rarityPayload}
             />
           }
           <ToastContainer
@@ -168,7 +187,10 @@ export function App() {
             draggable={false}
             pauseOnHover
           />
-          <VersionCheck />
+          {/* VersionCheck disabled: it polls zeddicus-pl/d2rHolyGrail releases, not this fork */}
+          <audio preload="auto" ref={rarityDingPlayer} style={{ display: 'none' }}>
+            <source src={dingSound} type="audio/mpeg" />
+          </audio>
         </>
       </ThemeProvider>
     </>

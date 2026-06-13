@@ -5,8 +5,9 @@ import { IpcMainEvent } from 'electron/renderer';
 import WindowStateKeeper from "electron-window-state";
 import { fetchSilospen, getAllDropRates, runSilospenServer } from './lib/silospenDropCalculator'
 import itemsDatabase from './lib/items';
+import rarityTracker from './lib/rarityTracker';
 import settingsStore from './lib/settings';
-import { setupStreamFeed, streamPort, updateDataToListeners } from './lib/stream';
+import { setupStreamFeed, streamPort, updateDataToListeners, updateRarityToListeners } from './lib/stream';
 import { registerUpdateDownloader } from './lib/update';
 
 // these constants are set by the build stage
@@ -147,6 +148,14 @@ async function registerListeners () {
   ipcMain.on('setItemNote', (event, itemName, note) => {
     eventToReply = event;
     itemsDatabase.setItemNote(itemName, note).then((items) => event.reply('getItemNotes', items))
+  });
+  ipcMain.on('getRarityState', (event) => {
+    event.reply('rarityUpdate', rarityTracker.buildPayload());
+  });
+  ipcMain.on('resetRarityRun', (event) => {
+    rarityTracker.reset();
+    event.reply('rarityUpdate', rarityTracker.buildPayload());
+    updateRarityToListeners();
   });
 }
 

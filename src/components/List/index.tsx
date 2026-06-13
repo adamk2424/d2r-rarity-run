@@ -17,11 +17,14 @@ import logo from '../../../assets/logo.svg';
 import twitchIcon from '../../../assets/twitch-icon.svg';
 import { Summary } from './summary';
 import { Language } from './language';
+import { RarityBoard } from '../Rarity';
+import type { RarityPayload } from '../../../electron/lib/rarityTracker';
 import { computeStats } from '../../utils/objects';
 import { settingsKeys } from '../../utils/defaultSettings';
 
 /* eslint-disable no-unused-vars */
 export enum TabState {
+  RarityRun,
   Statistics,
   UniqueArmor,
   UniqueWeapons,
@@ -41,10 +44,11 @@ type ListProps = {
   fileReaderResponse: FileReaderResponse | null,
   appSettings: Settings,
   itemNotes: ItemNotes,
+  rarityPayload: RarityPayload | null,
 }
 
-export function List({ fileReaderResponse, appSettings, itemNotes }: ListProps) {
-  const [tab, setTab] = useState(TabState.Statistics);
+export function List({ fileReaderResponse, appSettings, itemNotes, rarityPayload }: ListProps) {
+  const [tab, setTab] = useState(TabState.RarityRun);
   const [search, setSearch] = useState<string>('');
   const { t } = useTranslation();
 
@@ -132,6 +136,7 @@ export function List({ fileReaderResponse, appSettings, itemNotes }: ListProps) 
             variant="scrollable"
             scrollButtons="auto"
           >
+            <Tab label="Rarity Run" />
             <Tab label={t("Statistics")} />
             <Tab label={t("Unique armor")} />
             <Tab label={t("Unique weapons")} />
@@ -146,13 +151,16 @@ export function List({ fileReaderResponse, appSettings, itemNotes }: ListProps) 
           </Tabs> 
         : null}
       </Box>
-      {tab != TabState.Statistics && <MissingOnlySwitch>
+      {tab != TabState.Statistics && tab != TabState.RarityRun && <MissingOnlySwitch>
         <FormControlLabel
           style={{ opacity: 0.7, paddingTop: 10 }}
           control={<Switch size='small' onChange={handleOnlyMissing} checked={appSettings.onlyMissing} />}
           label={<small><Trans>Only missing items</Trans></small>}
         />
       </MissingOnlySwitch>}
+      {!search.length && tab === TabState.RarityRun &&
+        <RarityBoard payload={rarityPayload} />
+      }
       {(search.length || tab === TabState.Statistics) && <TabPanel
         value={search.length ? TabState.None : tab}
         index={TabState.Statistics}

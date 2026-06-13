@@ -15,7 +15,8 @@ import { getHolyGrailSeedData, runesSeed } from './holyGrailSeedData';
 import { buildFlattenObjectCacheKey, flattenObject, isRune, simplifyItemName } from '../../src/utils/objects';
 import { eventToReply, setEventToReply } from '../main';
 import settingsStore from './settings';
-import { updateDataToListeners } from './stream';
+import { updateDataToListeners, updateRarityToListeners } from './stream';
+import rarityTracker from './rarityTracker';
 import { runesMapping } from './runesMapping';
 import { getSaveGamesFolder } from 'platform-folders';
 const { readFile } = promises;
@@ -337,6 +338,14 @@ class ItemsStore {
       event.reply('openFolder', results);
       this.currentData = results;
       updateDataToListeners();
+
+      // rarity run: flush this pass, notify renderer + overlay
+      const rarityChanges = rarityTracker.commit();
+      event.reply('rarityUpdate', rarityTracker.buildPayload());
+      if (playSounds && rarityChanges.length) {
+        event.reply('rarityChanges', rarityChanges);
+      }
+      updateRarityToListeners();
     });
   }
 
@@ -375,6 +384,8 @@ class ItemsStore {
     }
 
     const parseD2S = (response: d2s.types.ID2S) => {
+      // rarity run tracking sees every character regardless of game mode filters
+      rarityTracker.processD2S(saveName, response);
       const settings = settingsStore.getSettings()
       if (settings.gameMode === GameMode.Softcore && response.header.status.hardcore) {
         return [];
@@ -394,6 +405,7 @@ class ItemsStore {
     };
 
     const parseStash = (response: d2s.types.IStash) => {
+      rarityTracker.processStash(response);
       const settings = settingsStore.getSettings()
       if (settings.gameMode === GameMode.Softcore && saveName.toLowerCase().includes('hardcore')) {
         return [];
