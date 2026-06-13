@@ -151,6 +151,7 @@ export function App() {
       if (changes.length) {
         const player = rarityDingPlayer.current;
         if (player) {
+          player.volume = 0.25; // ~-12dB; ding.mp3 is hot at full volume
           player.currentTime = 0;
           player.play().catch(() => { /* autoplay race on first event */ });
         }
