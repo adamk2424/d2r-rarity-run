@@ -13,6 +13,24 @@ Built on top of (forked from) the excellent
 [Holy Grail by Zeddicus](https://github.com/zeddicus-pl/d2rHolyGrail) — all of
 its grail-tracking features are still in the other tabs.
 
+## Download & run (no terminal needed)
+
+1. Go to the [**Releases**](https://github.com/adamk2424/d2r-rarity-run/releases) page.
+2. Download **`RarityChallenge-portable-<version>.exe`** — a single file, no install.
+   (Or `RarityChallenge-Setup-<version>.exe` if you'd rather install it with a
+   Start-menu shortcut.)
+3. **Double-click it** to launch. Windows SmartScreen may warn because the app is
+   unsigned — choose *More info → Run anyway*.
+4. In the app, click **Select folder** and pick your D2R save folder
+   (usually `C:\Users\<you>\Saved Games\Diablo II Resurrected`).
+
+Works with **offline single-player** characters only (online saves live on
+Blizzard's servers). To show the overlay on stream, add a Browser source in OBS
+pointing at `http://localhost:3666`.
+
+Running from source instead? Double-click **`Launch Rarity Challenge (from source).bat`**
+(requires Node.js + Yarn), or see the developer section below.
+
 ---
 
 # Holy Grail

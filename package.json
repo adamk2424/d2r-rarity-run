@@ -1,8 +1,8 @@
 {
   "name": "d2rholygrail",
-  "author": "Kamil Tunkiewicz <kamil.tunkiewicz(at)gmail.com>",
-  "version": "2.5.0",
-  "description": "Scan your Diablo 2 Resurrected saves to check your Holy Grail progress",
+  "author": "adamk2424",
+  "version": "1.0.0",
+  "description": "Companion app for the D2R Rarity Challenge — track the rarest gear that drops, per slot",
   "main": "./.webpack/main",
   "scripts": {
     "start": "set ELECTRON_ENV=development&&electron-forge start",
@@ -106,13 +106,17 @@
     "wait-on": "6.0.1"
   },
   "build": {
-    "appId": "d2rHolyGrail",
-    "productName": "Diablo 2 Holy Grail",
+    "appId": "com.adamk.d2r-rarity-challenge",
+    "productName": "Rarity Challenge",
     "win": {
       "target": [
+        "portable",
         "nsis"
       ],
       "icon": "./assets/icon.ico"
+    },
+    "portable": {
+      "artifactName": "RarityChallenge-portable-${version}.exe"
     },
     "mac": {
       "identity": null
@@ -120,10 +124,12 @@
     "nsis": {
       "installerIcon": "./assets/install.ico",
       "uninstallerIcon": "./assets/delete.ico",
-      "uninstallDisplayName": "Diablo 2 Holy Grail",
+      "uninstallDisplayName": "Rarity Challenge",
       "license": "./assets/license.txt",
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "RarityChallenge-Setup-${version}.exe",
+      "shortcutName": "Rarity Challenge"
     },
     "files": [
       ".webpack/**/*"
@@ -144,8 +150,8 @@
   "config": {
     "forge": {
       "packagerConfig": {
-        "name": "HolyGrail",
-        "executableName": "HolyGrail",
+        "name": "RarityChallenge",
+        "executableName": "RarityChallenge",
         "icon": "assets/icon",
         "extraResource": [
           "assets"
