@@ -144,6 +144,18 @@ class RarityTracker {
     this.pendingStashItems = [];
     this.pendingChanges = [];
     this.dirty = false;
+    // electron-json-storage defaults to <userData>/storage, but this app stores
+    // its JSON directly in <userData> (see settings.ts). Module load order
+    // (settings -> stream -> rarityTracker) means settings hasn't set the path
+    // yet when we construct, so we must set it ourselves — otherwise the
+    // persisted run state is read from the wrong folder, the character is
+    // re-baselined on every launch, and progression history is lost.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { app } = require('electron');
+      storage.setDataPath(app.getPath('userData'));
+    } catch (e) { /* non-electron env (tests) */ }
+
     try {
       const stored = storage.getSync(STORAGE_KEY) as PersistedState;
       if (stored && stored.characters) {
@@ -154,7 +166,7 @@ class RarityTracker {
         };
       }
     } catch (e) {
-      console.log('rarityTracker: could not load persisted state', e);
+      console.log('[rarity] could not load persisted state', e);
     }
   }
 
@@ -227,6 +239,7 @@ class RarityTracker {
 
   ensureCharacter = (parsed: ParsedChar): CharacterRunState => {
     if (!this.state.characters[parsed.name]) {
+      console.log('[rarity] FRESH run-state created for', parsed.name, '(re-baseline — prior history lost)');
       this.state.characters[parsed.name] = {
         name: parsed.name,
         heroClass: parsed.heroClass,
